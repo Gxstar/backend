@@ -1,25 +1,14 @@
-from datetime import datetime
 from typing import Optional
+from datetime import datetime
+from sqlmodel import SQLModel, Field
 
-from sqlalchemy import Column, Integer, String, ForeignKey, DECIMAL, TIMESTAMP, Text
-from sqlalchemy.orm import relationship
-
-from .base import Base
-
-
-class Mount(Base):
-    __tablename__ = 'mount'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String(100), nullable=False, unique=True)
-    brand_id = Column(Integer, ForeignKey('brand.id'))
-    release_year = Column(Integer)
-    flange_distance = Column(DECIMAL(5, 2))
-    diameter = Column(DECIMAL(5, 2))
-    description = Column(Text)
-    created_at = Column(TIMESTAMP, server_default='CURRENT_TIMESTAMP')
-    updated_at = Column(TIMESTAMP, server_default='CURRENT_TIMESTAMP')
-
-    brand = relationship('Brand', back_populates='mounts')
-    cameras = relationship('Camera', back_populates='mount')
-    lenses = relationship('Lens', back_populates='mount')
+class Mount(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(max_length=100, unique=True)
+    brand_id: Optional[int] = Field(default=None, foreign_key="brand.id")
+    release_year: Optional[int] = Field(default=None)
+    flange_distance: Optional[float] = Field(default=None)
+    diameter: Optional[float] = Field(default=None)
+    description: Optional[str] = Field(default=None)
+    created_at: Optional[datetime] = Field(default_factory=datetime.now)
+    updated_at: Optional[datetime] = Field(default_factory=datetime.now)
