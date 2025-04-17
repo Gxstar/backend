@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from models.brand import Brand
 from database.config import get_db
+from auth.auth import get_current_admin
 
 router = APIRouter(prefix="/brands", tags=["品牌管理"])
 
@@ -12,7 +13,8 @@ router = APIRouter(prefix="/brands", tags=["品牌管理"])
     response_model=Brand,
     summary="创建品牌",
     description="添加一个新的相机品牌到数据库",
-    response_description="创建成功的品牌信息"
+    response_description="创建成功的品牌信息",
+    dependencies=[Depends(get_current_admin)]
 )
 async def create_brand(brand: Brand, db: Session = Depends(get_db)):
     existing_brand = db.exec(
@@ -66,7 +68,8 @@ async def read_brand(brand_id: int, db: Session = Depends(get_db)):
     response_model=Brand,
     summary="更新品牌信息",
     description="根据ID更新相机品牌信息",
-    response_description="更新后的品牌信息"
+    response_description="更新后的品牌信息",
+    dependencies=[Depends(get_current_admin)]
 )
 async def update_brand(
     brand_id: int,
@@ -100,7 +103,8 @@ async def update_brand(
     "/{brand_id}",
     summary="删除品牌",
     description="根据ID删除相机品牌记录",
-    response_description="删除操作结果"
+    response_description="删除操作结果",
+    dependencies=[Depends(get_current_admin)]
 )
 async def delete_brand(brand_id: int, db: Session = Depends(get_db)):
     brand = db.get(Brand, brand_id)
