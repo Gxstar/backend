@@ -8,5 +8,14 @@ CREATE TABLE brand (
     website VARCHAR(255) COMMENT '品牌官方网站URL',
     description TEXT COMMENT '品牌详细描述',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间'
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间'
 );
+
+-- 在name字段上创建索引
+CREATE INDEX idx_brand_name ON brand(name);
+
+-- 在country字段上创建索引
+CREATE INDEX idx_brand_country ON brand(country);
+
+-- 在founded_year字段上创建索引
+CREATE INDEX idx_brand_founded_year ON brand(founded_year);

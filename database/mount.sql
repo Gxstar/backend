@@ -9,5 +9,6 @@ CREATE TABLE mount (
     diameter DECIMAL(5,2) COMMENT '卡口直径(单位:mm)',
     description TEXT COMMENT '卡口详细描述',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间'
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间'
 );
+CREATE INDEX idx_mount_brand_id ON mount(brand_id);

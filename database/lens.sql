@@ -19,6 +19,9 @@ CREATE TABLE lens (
     created_by INTEGER COMMENT '创建者ID，外键关联用户表',
     FOREIGN KEY (created_by) REFERENCES `user`(id) ON DELETE SET NULL ON UPDATE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间',
     UNIQUE (model, brand_id) COMMENT '镜头型号和品牌组合唯一'
 );
+CREATE INDEX idx_lens_brand_id ON lens(brand_id);
+CREATE INDEX idx_lens_mount_id ON lens(mount_id);
+CREATE INDEX idx_lens_created_by ON lens(created_by);

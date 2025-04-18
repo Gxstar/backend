@@ -10,5 +10,7 @@ CREATE TABLE `user` (
     bio TEXT COMMENT '用户个人简介',
     last_login TIMESTAMP NULL COMMENT '最后登录时间',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间'
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间'
 );
+CREATE INDEX idx_user_username ON `user`(username);
+CREATE INDEX idx_user_email ON `user`(email);

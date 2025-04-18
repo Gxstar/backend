@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from api.brand import router as brand_router
 from api.user import router as user_router
+from api.camera import router as camera_router
+from api.lens import router as lens_router
+from api.mount import router as mount_router
 
 app = FastAPI(
     title="相机数据管理系统API",
@@ -9,6 +12,9 @@ app = FastAPI(
 
 app.include_router(brand_router)
 app.include_router(user_router)
+app.include_router(camera_router)
+app.include_router(lens_router)
+app.include_router(mount_router)
 
 @app.get("/")
 async def read_root():
