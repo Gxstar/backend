@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from api.brand import router as brand_router
 from api.user import router as user_router
 from api.camera import router as camera_router
@@ -8,6 +9,15 @@ from api.mount import router as mount_router
 app = FastAPI(
     title="相机数据管理系统API",
     description="相机数据管理后端服务，提供信息的增删改查功能"
+)
+
+# 添加CORS中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(brand_router)

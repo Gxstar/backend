@@ -1,12 +1,33 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from typing import List, Optional
+from datetime import timedelta
 
 from models.user import User
 from database.config import get_db
-from auth.auth import get_current_user, get_current_admin
+from auth.auth import get_current_user, get_current_admin, authenticate_user, create_access_token
 
 router = APIRouter(prefix="/users", tags=["用户管理"])
+
+@router.post(
+    "/login",
+    summary="用户登录",
+    description="用户登录接口，返回访问令牌",
+    response_description="访问令牌"
+)
+async def login(username: str, password: str, db: Session = Depends(get_db)):
+    user = authenticate_user(db, username, password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="用户名或密码错误",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=30)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post(
     "/register",
