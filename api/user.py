@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import timedelta
@@ -15,7 +15,9 @@ router = APIRouter(prefix="/users", tags=["用户管理"])
     description="用户登录接口，返回访问令牌",
     response_description="访问令牌"
 )
-async def login(username: str, password: str, db: Session = Depends(get_db)):
+async def login(user_data: dict, db: Session = Depends(get_db)):
+    username = user_data.get("username")
+    password = user_data.get("password")
     user = authenticate_user(db, username, password)
     if not user:
         raise HTTPException(
