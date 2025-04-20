@@ -51,9 +51,13 @@ async def register_user(user: User, db: Session = Depends(get_db)):
             status_code=400,
             detail="Username or email already exists"
         )
-    
-    user.is_admin = False
-    db.add(user)
+    user.password_hash = get_password_hash(user.password_hash)
+    db_user = User(
+        username=user.username,
+        email=user.email,
+        password_hash=user.password_hash
+    )
+    db.add(db_user)
     db.commit()
     db.refresh(user)
     return user
@@ -80,7 +84,13 @@ async def create_user(user: User, db: Session = Depends(get_db)):
             detail="Username or email already exists"
         )
     
-    db.add(user)
+    user.password_hash = get_password_hash(user.password_hash)
+    db_user = User(
+        username=user.username,
+        email=user.email,
+        password_hash=user.password_hash
+    )
+    db.add(db_user)
     db.commit()
     db.refresh(user)
     return user
@@ -166,6 +176,19 @@ async def update_user(
     db.commit()
     db.refresh(db_user)
     return db_user
+
+@router.get(
+    "/me",
+    response_model=User,
+    summary="获取当前用户信息",
+    description="获取当前登录用户的详细信息",
+    response_description="当前用户信息"
+)
+async def read_current_user(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    return current_user
 
 @router.delete(
     "/{user_id}",
