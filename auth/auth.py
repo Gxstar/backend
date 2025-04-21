@@ -9,6 +9,7 @@ from sqlmodel import Session, select
 from dotenv import load_dotenv
 from models.user import User
 from database.config import get_db
+from datetime import datetime, timedelta, timezone  # 添加timezone导入
 
 # 加载环境变量
 load_dotenv()
@@ -39,9 +40,9 @@ def authenticate_user(db: Session, username: str, password: str):
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta  # 修改这里
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=15)  # 修改这里
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
