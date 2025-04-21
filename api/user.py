@@ -114,6 +114,18 @@ async def read_users(
     return users
 
 @router.get(
+    "/me",
+    response_model=User,
+    summary="获取当前用户信息",
+    description="获取当前登录用户的详细信息",
+    response_description="当前用户信息"
+)
+async def read_current_user(
+    current_user: User = Depends(get_current_user)
+):
+    return current_user
+
+@router.get(
     "/{user_id}",
     response_model=User,
     summary="获取用户详情",
@@ -130,7 +142,7 @@ async def read_user(
     ).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not current_user.is_admin and user_id != current_user.id:
+    if current_user.role != 'admin' and user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Forbidden")
     return user
 
@@ -150,7 +162,7 @@ async def update_user(
     db_user = db.get(User, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    if not current_user.is_admin and user_id != current_user.id:
+    if current_user.role != 'admin' and user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Forbidden")
     
     # 检查更新后的用户名和邮箱是否与其他用户冲突
@@ -176,19 +188,6 @@ async def update_user(
     db.commit()
     db.refresh(db_user)
     return db_user
-
-@router.get(
-    "/me",
-    response_model=User,
-    summary="获取当前用户信息",
-    description="获取当前登录用户的详细信息",
-    response_description="当前用户信息"
-)
-async def read_current_user(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    return current_user
 
 @router.delete(
     "/{user_id}",
