@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from models.user import User
 from database.config import get_db
-from auth.auth import get_current_user, get_current_admin, authenticate_user, create_access_token
+from auth.auth import get_current_user, get_current_admin, authenticate_user, create_access_token,get_password_hash
 
 router = APIRouter(prefix="/users", tags=["用户管理"])
 
@@ -38,12 +38,12 @@ async def login(user_data: dict, db: Session = Depends(get_db)):
     description="新用户注册接口",
     response_description="注册成功的用户信息"
 )
-async def register_user(user: User, db: Session = Depends(get_db)):
+async def register_user(user_data: dict, db: Session = Depends(get_db)):
     # 检查用户名和邮箱是否已存在
     existing_user = db.exec(
         select(User).where(
-            (User.username == user.username) | 
-            (User.email == user.email)
+            (User.username == user_data.get("username")) | 
+            (User.email == user_data.get("email"))
         )
     ).first()
     if existing_user:
@@ -51,16 +51,16 @@ async def register_user(user: User, db: Session = Depends(get_db)):
             status_code=400,
             detail="Username or email already exists"
         )
-    user.password_hash = get_password_hash(user.password_hash)
+    
     db_user = User(
-        username=user.username,
-        email=user.email,
-        password_hash=user.password_hash
+        username=user_data.get("username"),
+        email=user_data.get("email"),
+        password_hash=get_password_hash(user_data.get("password"))
     )
     db.add(db_user)
     db.commit()
-    db.refresh(user)
-    return user
+    db.refresh(db_user)
+    return db_user
 
 @router.post(
     "/",
