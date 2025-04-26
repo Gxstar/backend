@@ -6,7 +6,7 @@ import os
 
 from models.user import User
 from database.config import get_db
-from auth.auth import get_current_user, get_current_admin, authenticate_user, create_access_token,get_password_hash
+from auth.auth import get_current_user, get_current_admin, authenticate_user, create_access_token,get_password_hash, login_user
 
 router = APIRouter(prefix="/users", tags=["用户管理"])
 
@@ -19,24 +19,7 @@ router = APIRouter(prefix="/users", tags=["用户管理"])
 async def login(user_data: dict, db: Session = Depends(get_db)):
     username = user_data.get("username")
     password = user_data.get("password")
-    user = authenticate_user(db, username, password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="用户名或密码错误",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    from datetime import datetime
-    user.last_login = datetime.now()
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    # 从环境变量获取令牌失效时间
-    expire_minutes = int(os.getenv('AUTH_TOKEN_EXPIRE_MINUTES', 30))
-    access_token_expires = timedelta(minutes=expire_minutes)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
+    access_token = login_user(db, username, password)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post(
