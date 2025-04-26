@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from typing import List, Optional
 from datetime import timedelta
+import os
 
 from models.user import User
 from database.config import get_db
@@ -30,7 +31,9 @@ async def login(user_data: dict, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    access_token_expires = timedelta(minutes=30)
+    # 从环境变量获取令牌失效时间
+    expire_minutes = int(os.getenv('AUTH_TOKEN_EXPIRE_MINUTES', 30))
+    access_token_expires = timedelta(minutes=expire_minutes)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
