@@ -25,6 +25,11 @@ async def login(user_data: dict, db: Session = Depends(get_db)):
             detail="用户名或密码错误",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    from datetime import datetime
+    user.last_login = datetime.now()
+    db.add(user)
+    db.commit()
+    db.refresh(user)
     access_token_expires = timedelta(minutes=30)
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires

@@ -41,11 +41,13 @@ async def create_camera(camera: Camera, db: Session = Depends(get_db)):
 async def read_cameras(
     skip: Optional[int] = 0,
     limit: Optional[int] = 100,
+    search: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    cameras = db.exec(
-        select(Camera).offset(skip).limit(limit)
-    ).all()
+    query = select(Camera).offset(skip).limit(limit)
+    if search:
+        query = query.where(Camera.model.contains(search))
+    cameras = db.exec(query).all()
     return cameras
 
 @router.get(

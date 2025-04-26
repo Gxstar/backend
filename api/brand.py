@@ -41,11 +41,13 @@ async def create_brand(brand: Brand, db: Session = Depends(get_db)):
 async def read_brands(
     skip: Optional[int] = 0,
     limit: Optional[int] = 100,
+    keyword: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    brands = db.exec(
-        select(Brand).offset(skip).limit(limit)
-    ).all()
+    query = select(Brand).offset(skip).limit(limit)
+    if keyword:
+        query = query.where((Brand.name.contains(keyword)) | (Brand.name_zh.contains(keyword)))
+    brands = db.exec(query).all()
     return brands
 
 @router.get(
