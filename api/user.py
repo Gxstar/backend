@@ -6,7 +6,7 @@ import os
 
 from models.user import User
 from database.config import get_db
-from auth.auth import get_current_user, get_current_admin, authenticate_user, create_access_token,get_password_hash, login_user
+from auth.auth import get_current_user, get_current_admin, get_password_hash, login_user
 
 router = APIRouter(prefix="/users", tags=["用户管理"])
 

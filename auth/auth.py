@@ -69,6 +69,20 @@ async def get_current_user(
         raise credentials_exception
     return user
 
+def login_user(db: Session, username: str, password: str):
+    user = authenticate_user(db, username, password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="用户名或密码错误"
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username},
+        expires_delta=access_token_expires
+    )
+    return access_token
+
 async def get_current_admin(
     current_user: User = Depends(get_current_user)
 ):
