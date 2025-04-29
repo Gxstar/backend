@@ -6,11 +6,11 @@ CREATE TABLE brand (
     name VARCHAR(100) NOT NULL UNIQUE COMMENT '品牌英文名称，唯一',
     name_zh VARCHAR(100) COMMENT '品牌中文名称',
     country VARCHAR(50) COMMENT '品牌所属国家',
-    founded_year INTEGER COMMENT '品牌创立年份',
+    founded_year YEAR COMMENT '品牌创立年份',
     website VARCHAR(255) COMMENT '品牌官方网站URL',
     description TEXT COMMENT '品牌详细描述',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间'
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间'
 );
 
 -- 卡口表
@@ -19,12 +19,12 @@ CREATE TABLE mount (
     name VARCHAR(100) NOT NULL UNIQUE COMMENT '卡口名称，唯一',
     brand_id INTEGER COMMENT '所属品牌ID',
     FOREIGN KEY (brand_id) REFERENCES brand(id),
-    release_year INTEGER COMMENT '卡口发布年份',
+    release_year YEAR COMMENT '卡口发布年份',
     flange_distance DECIMAL(5,2) COMMENT '法兰距(单位:mm)',
     diameter DECIMAL(5,2) COMMENT '卡口直径(单位:mm)',
     description TEXT COMMENT '卡口详细描述',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间'
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间'
 );
 
 -- 用户表
@@ -39,7 +39,7 @@ CREATE TABLE `user` (
     bio TEXT COMMENT '用户个人简介',
     last_login TIMESTAMP NULL COMMENT '最后登录时间',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间'
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间'
 );
 
 -- 相机表
@@ -51,7 +51,7 @@ CREATE TABLE camera (
     FOREIGN KEY (brand_id) REFERENCES brand(id),
     mount_id INTEGER COMMENT '卡口ID',
     FOREIGN KEY (mount_id) REFERENCES mount(id),
-    release_year INTEGER COMMENT '相机发布年份',
+    release_year YEAR COMMENT '相机发布年份',
     type VARCHAR(50) COMMENT '相机类型(DSLR/微单/卡片机/胶片机/其他)',
     CONSTRAINT chk_camera_type CHECK (type IN ('DSLR', 'Mirrorless', 'Compact', 'Film', 'Other')),
     sensor_size VARCHAR(50) COMMENT '传感器尺寸',
@@ -64,7 +64,7 @@ CREATE TABLE camera (
     created_by INTEGER COMMENT '创建者ID，外键关联用户表',
     FOREIGN KEY (created_by) REFERENCES `user`(id) ON DELETE SET NULL ON UPDATE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间',
     UNIQUE (model, brand_id) COMMENT '相机型号和品牌组合唯一'
 );
 
@@ -77,7 +77,7 @@ CREATE TABLE lens (
     FOREIGN KEY (brand_id) REFERENCES brand(id),
     mount_id INTEGER COMMENT '卡口ID',
     FOREIGN KEY (mount_id) REFERENCES mount(id),
-    release_year INTEGER COMMENT '镜头发布年份',
+    release_year YEAR COMMENT '镜头发布年份',
     focal_length VARCHAR(50) NOT NULL COMMENT '焦距范围(单位:mm)',
     aperture VARCHAR(50) NOT NULL COMMENT '光圈范围',
     lens_type VARCHAR(50) COMMENT '镜头类型(定焦/变焦/微距/广角/长焦/其他)',
@@ -89,7 +89,7 @@ CREATE TABLE lens (
     created_by INTEGER COMMENT '创建者ID，外键关联用户表',
     FOREIGN KEY (created_by) REFERENCES `user`(id) ON DELETE SET NULL ON UPDATE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录创建时间',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '记录更新时间',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '记录更新时间',
     UNIQUE (model, brand_id) COMMENT '镜头型号和品牌组合唯一'
 );
 
