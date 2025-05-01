@@ -5,6 +5,7 @@ description = "Backend service"
 requires-python = ">=3.12"
 dependencies = [
     "aiomysql>=0.2.0",
+    "alembic>=1.15.2",
     "bcrypt>=4.3.0",
     "fastapi>=0.115.12",
     "mariadb>=1.1.12",
@@ -24,3 +25,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["backend"]
+
+[tool.uv]
+index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
