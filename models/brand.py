@@ -9,6 +9,6 @@ class Brand(SQLModel, table=True):
     country: Optional[str] = Field(max_length=50, default=None)
     founded_year: Optional[int] = Field(default=None)
     website: Optional[str] = Field(max_length=255, default=None)
-    description: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(default=None, max_length=500)
     created_at: Optional[datetime] = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = Field(default_factory=datetime.now, sa_column_kwargs={"onupdate": datetime.now})

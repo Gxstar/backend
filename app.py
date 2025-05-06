@@ -5,6 +5,8 @@ from api.user import router as user_router
 from api.camera import router as camera_router
 from api.lens import router as lens_router
 from api.mount import router as mount_router
+from alembic.config import Config
+from alembic import command
 
 app = FastAPI(
     title="相机数据管理系统API",
@@ -25,6 +27,13 @@ app.include_router(user_router)
 app.include_router(camera_router)
 app.include_router(lens_router)
 app.include_router(mount_router)
+
+@app.lifespan("startup")
+async def lifespan_startup():
+    # 数据库迁移
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+    yield
 
 @app.get("/")
 async def read_root():
