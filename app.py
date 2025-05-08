@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from api.brand import router as brand_router
 from api.user import router as user_router
 from api.camera import router as camera_router
@@ -8,9 +9,18 @@ from api.mount import router as mount_router
 from alembic.config import Config
 from alembic import command
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 应用启动时执行数据库迁移
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+    yield
+    # 应用关闭时可以添加清理逻辑
+
 app = FastAPI(
     title="相机数据管理系统API",
-    description="相机数据管理后端服务，提供信息的增删改查功能"
+    description="相机数据管理后端服务，提供信息的增删改查功能",
+    lifespan=lifespan
 )
 
 # 添加CORS中间件
@@ -28,11 +38,7 @@ app.include_router(camera_router)
 app.include_router(lens_router)
 app.include_router(mount_router)
 
-@app.on_event("startup")
-async def startup_event():
-    # 数据库迁移
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
+
 
 @app.get("/")
 async def read_root():
