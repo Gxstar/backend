@@ -28,12 +28,11 @@ app.include_router(camera_router)
 app.include_router(lens_router)
 app.include_router(mount_router)
 
-@app.lifespan("startup")
-async def lifespan_startup():
+@app.on_event("startup")
+async def startup_event():
     # 数据库迁移
     alembic_cfg = Config("alembic.ini")
     command.upgrade(alembic_cfg, "head")
-    yield
 
 @app.get("/")
 async def read_root():
