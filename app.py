@@ -9,18 +9,18 @@ from api.mount import router as mount_router
 from alembic.config import Config
 from alembic import command
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # 应用启动时执行数据库迁移
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
-    yield
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     # 应用启动时执行数据库迁移
+#     alembic_cfg = Config("alembic.ini")
+#     command.upgrade(alembic_cfg, "head")
+#     yield
     # 应用关闭时可以添加清理逻辑
 
 app = FastAPI(
     title="相机数据管理系统API",
     description="相机数据管理后端服务，提供信息的增删改查功能",
-    lifespan=lifespan
+    # lifespan=lifespan
 )
 
 # 添加CORS中间件
