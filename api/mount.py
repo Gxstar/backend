@@ -16,7 +16,14 @@ router = APIRouter(prefix="/mounts", tags=["卡口管理"])
     response_description="创建成功的卡口信息",
     dependencies=[Depends(get_current_admin)]
 )
-async def create_mount(mount: Mount, db: Session = Depends(get_db)):
+async def create_mount(mount: Mount, brand_ids: List[int] = None, db: Session = Depends(get_db)):
+    """
+    创建卡口并关联品牌
+    :param mount: 卡口基本信息
+    :param brand_ids: 关联的品牌ID列表
+    :param db: 数据库会话
+    :return: 创建成功的卡口信息
+    """
     existing_mount = db.exec(
         select(Mount).where(Mount.name == mount.name)
     ).first()
@@ -29,6 +36,22 @@ async def create_mount(mount: Mount, db: Session = Depends(get_db)):
     db.add(mount)
     db.commit()
     db.refresh(mount)
+    
+    # 处理品牌关联
+    if brand_ids:
+        from models.brand_mount_link import BrandMountLink
+        for brand_id in brand_ids:
+            # 确保brand_id有效且存在
+            brand_exists = db.exec(select(Brand).where(Brand.id == brand_id)).first()
+            if not brand_exists:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Brand with id {brand_id} not found"
+                )
+            brand_mount = BrandMountLink(brand_id=brand_id, mount_id=mount.id)
+            db.add(brand_mount)
+        db.commit()
+    
     return mount
 
 @router.get(
@@ -43,9 +66,20 @@ async def read_mounts(
     limit: Optional[int] = 100,
     db: Session = Depends(get_db)
 ):
+    # 查询卡口列表并关联品牌中文名称
     mounts = db.exec(
-        select(Mount).offset(skip).limit(limit)
+        select(Mount)
+        .offset(skip)
+        .limit(limit)
     ).all()
+    
+    # 为每个卡口加载关联的品牌信息
+    for mount in mounts:
+        db.refresh(mount)
+        if mount.brands:
+            for brand in mount.brands:
+                db.refresh(brand)
+    
     return mounts
 
 @router.get(
@@ -61,6 +95,13 @@ async def read_mount(mount_id: int, db: Session = Depends(get_db)):
     ).first()
     if not mount:
         raise HTTPException(status_code=404, detail="Mount not found")
+    
+    # 加载关联的品牌信息
+    db.refresh(mount)
+    if mount.brands:
+        for brand in mount.brands:
+            db.refresh(brand)
+    
     return mount
 
 @router.put(
