@@ -3,11 +3,13 @@ from datetime import datetime
 from sqlmodel import SQLModel, Field, Relationship
 from models.base import BaseSQLModel
 from models.lens_mount_link import LensMountLink
+from models.brand_mount_link import BrandMountLink
 
 class Mount(BaseSQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(max_length=100, unique=True)
-    brand_id: Optional[int] = Field(default=None, foreign_key="brand.id")
+    # 定义与Brand的多对多关系
+    brands: List["Brand"] = Relationship(back_populates="mounts", link_model=BrandMountLink)
     release_year: Optional[int] = Field(default=None)
     flange_distance: Optional[float] = Field(default=None)
     diameter: Optional[float] = Field(default=None)

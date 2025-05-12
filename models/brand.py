@@ -1,7 +1,8 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from models.base import BaseSQLModel
+from models.brand_mount_link import BrandMountLink
 
 class Brand(BaseSQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -13,3 +14,5 @@ class Brand(BaseSQLModel, table=True):
     description: Optional[str] = Field(default=None, max_length=500)
     created_at: Optional[datetime] = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = Field(default_factory=datetime.now, sa_column_kwargs={"onupdate": datetime.now})
+    # 定义与Mount的多对多关系
+    mounts: List["Mount"] = Relationship(back_populates="brands", link_model=BrandMountLink)
