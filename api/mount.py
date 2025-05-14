@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,Body
 from sqlmodel import Session, select
 from typing import List, Optional
 
@@ -40,6 +40,7 @@ async def create_mount(mount: Mount, brand_ids: List[int] = None, db: Session = 
     # 处理品牌关联
     if brand_ids:
         from models.brand_mount_link import BrandMountLink
+        from models.brand import Brand
         for brand_id in brand_ids:
             # 确保brand_id有效且存在
             brand_exists = db.exec(select(Brand).where(Brand.id == brand_id)).first()
@@ -115,8 +116,17 @@ async def read_mount(mount_id: int, db: Session = Depends(get_db)):
 async def update_mount(
     mount_id: int,
     mount_update: Mount,
+    brands: List[int] = None,
     db: Session = Depends(get_db)
 ):
+    """
+    更新卡口信息
+    :param mount_id: 卡口ID
+    :param mount_update: 卡口更新数据(包含release_year,name,diameter等字段)
+    :param brand_ids: 关联的品牌ID列表
+    :param db: 数据库会话
+    :return: 更新后的卡口信息
+    """
     db_mount = db.get(Mount, mount_id)
     if not db_mount:
         raise HTTPException(status_code=404, detail="Mount not found")
@@ -131,9 +141,31 @@ async def update_mount(
                 detail="Mount with this name already exists"
             )
     
+    # 处理前端传入的JSON数据
     mount_data = mount_update.dict(exclude_unset=True)
+
+    # 更新字段
     for key, value in mount_data.items():
         setattr(db_mount, key, value)
+    
+    # 处理品牌关联更新
+    if brands is not None:
+        from models.brand_mount_link import BrandMountLink
+        from models.brand import Brand
+        
+        # 删除现有关联
+        db.exec(select(BrandMountLink).where(BrandMountLink.mount_id == mount_id)).delete()
+        
+        # 添加新关联
+        for brand_id in brands:
+            brand_exists = db.exec(select(Brand).where(Brand.id == brand_id)).first()
+            if not brand_exists:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Brand with id {brand_id} not found"
+                )
+            brand_mount = BrandMountLink(brand_id=brand_id, mount_id=mount_id)
+            db.add(brand_mount)
     
     db.add(db_mount)
     db.commit()
@@ -151,6 +183,10 @@ async def delete_mount(mount_id: int, db: Session = Depends(get_db)):
     mount = db.get(Mount, mount_id)
     if not mount:
         raise HTTPException(status_code=404, detail="Mount not found")
+    
+    # 删除关联的品牌关系
+    from models.brand_mount_link import BrandMountLink
+    db.exec(select(BrandMountLink).where(BrandMountLink.mount_id == mount_id)).delete()
     
     db.delete(mount)
     db.commit()
