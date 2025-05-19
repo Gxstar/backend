@@ -46,11 +46,11 @@ alembic upgrade head
 4. 启动服务
 ```bash
 uvicorn app:app --reload
+```
 
 5. 生产环境启动
 ```bash
 uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4
-```
 ```
 
 ## API文档
