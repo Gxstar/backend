@@ -131,4 +131,34 @@ python app.py
 uvicorn app:app --reload
 ```
 
+<<<<<<< HEAD
 服务将在 http://localhost:8000 上运行，API文档可在 http://localhost:8000/docs 访问。
+=======
+5. 生产环境启动
+```bash
+uvicorn app:app --host 0.0.0.0 --port 8000 --workers 4
+```
+
+## API文档
+启动服务后，访问以下地址查看API文档：
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+## 项目结构
+```
+backend/
+├── api/            # API路由
+├── models/         # 数据模型
+├── database/       # 数据库配置
+├── auth/           # 认证模块
+├── alembic/        # 数据库迁移
+└── app.py          # 主应用
+```
+
+## 贡献指南
+1. Fork项目
+2. 创建新分支 (`git checkout -b feature/your-feature`)
+3. 提交修改 (`git commit -am 'Add some feature'`)
+4. 推送分支 (`git push origin feature/your-feature`)
+5. 创建Pull Request
+>>>>>>> e11929b547e814506c73d75b2e589be75ba191e0
