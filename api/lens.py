@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlmodel import Session, select
+from sqlalchemy.orm import selectinload
 from typing import List, Optional
 
 from models.lens import Lens
+from models.lens_mount_link import LensMountLink
+from models.mount import Mount
 from database.config import get_db
 from auth.auth import get_current_admin
 
@@ -12,11 +15,15 @@ router = APIRouter(prefix="/lenses", tags=["镜头管理"])
     "/", 
     response_model=Lens,
     summary="创建镜头",
-    description="添加一个新的镜头到数据库",
+    description="添加一个新的镜头到数据库，并可关联多个卡口",
     response_description="创建成功的镜头信息",
     dependencies=[Depends(get_current_admin)]
 )
-async def create_lens(lens: Lens, db: Session = Depends(get_db)):
+async def create_lens(
+    lens: Lens,
+    mount_ids: Optional[List[int]] = Query(None, description="关联的卡口ID列表"),
+    db: Session = Depends(get_db)
+):
     existing_lens = db.exec(
         select(Lens).where(Lens.model == lens.model)
     ).first()
@@ -29,13 +36,28 @@ async def create_lens(lens: Lens, db: Session = Depends(get_db)):
     db.add(lens)
     db.commit()
     db.refresh(lens)
+    
+    # 处理镜头与卡口的关联
+    if mount_ids:
+        for mount_id in mount_ids:
+            mount = db.get(Mount, mount_id)
+            if not mount:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"卡口ID {mount_id} 不存在"
+                )
+            lens_mount = LensMountLink(lens_id=lens.id, mount_id=mount_id)
+            db.add(lens_mount)
+        db.commit()
+        db.refresh(lens)
+    
     return lens
 
 @router.get(
     "/",
     response_model=List[Lens],
     summary="获取镜头列表",
-    description="分页查询所有镜头信息",
+    description="分页查询所有镜头信息，包含关联的卡口信息",
     response_description="镜头列表"
 )
 async def read_lenses(
@@ -44,7 +66,10 @@ async def read_lenses(
     db: Session = Depends(get_db)
 ):
     lenses = db.exec(
-        select(Lens).offset(skip).limit(limit)
+        select(Lens)
+        .offset(skip)
+        .limit(limit)
+        .options(selectinload(Lens.mounts))  # 预加载关联的卡口信息
     ).all()
     return lenses
 
@@ -52,12 +77,14 @@ async def read_lenses(
     "/{lens_id}",
     response_model=Lens,
     summary="获取镜头详情",
-    description="根据ID查询特定镜头信息",
+    description="根据ID查询特定镜头信息，包含关联的卡口信息",
     response_description="镜头详细信息"
 )
 async def read_lens(lens_id: int, db: Session = Depends(get_db)):
     lens = db.exec(
-        select(Lens).where(Lens.id == lens_id)
+        select(Lens)
+        .where(Lens.id == lens_id)
+        .options(selectinload(Lens.mounts))  # 预加载关联的卡口信息
     ).first()
     if not lens:
         raise HTTPException(status_code=404, detail="Lens not found")
@@ -67,13 +94,14 @@ async def read_lens(lens_id: int, db: Session = Depends(get_db)):
     "/{lens_id}",
     response_model=Lens,
     summary="更新镜头信息",
-    description="根据ID更新镜头信息",
+    description="根据ID更新镜头信息，并可更新关联的卡口",
     response_description="更新后的镜头信息",
     dependencies=[Depends(get_current_admin)]
 )
 async def update_lens(
     lens_id: int,
     lens_update: Lens,
+    mount_ids: Optional[List[int]] = Query(None, description="关联的卡口ID列表，为null则不修改关联，为空列表则清除所有关联"),
     db: Session = Depends(get_db)
 ):
     db_lens = db.get(Lens, lens_id)
@@ -93,6 +121,23 @@ async def update_lens(
     lens_data = lens_update.dict(exclude_unset=True)
     for key, value in lens_data.items():
         setattr(db_lens, key, value)
+    
+    # 处理镜头与卡口的关联更新
+    if mount_ids is not None:
+        # 删除现有关联
+        db.exec(select(LensMountLink).where(LensMountLink.lens_id == lens_id)).delete()
+        
+        # 添加新关联
+        if mount_ids:
+            for mount_id in mount_ids:
+                mount = db.get(Mount, mount_id)
+                if not mount:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"卡口ID {mount_id} 不存在"
+                    )
+                lens_mount = LensMountLink(lens_id=lens_id, mount_id=mount_id)
+                db.add(lens_mount)
     
     db.add(db_lens)
     db.commit()
