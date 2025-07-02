@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from models.base import BaseSQLModel
 
 class User(BaseSQLModel, table=True):
@@ -15,3 +15,6 @@ class User(BaseSQLModel, table=True):
     last_login: Optional[datetime] = Field(default=None)
     created_at: Optional[datetime] = Field(default_factory=datetime.now)
     updated_at: Optional[datetime] = Field(default_factory=datetime.now)
+    
+    # 与文章的一对多关系
+    articles: List["Article"] = Relationship(back_populates="author")

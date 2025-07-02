@@ -6,6 +6,8 @@ from api.user import router as user_router
 from api.camera import router as camera_router
 from api.lens import router as lens_router
 from api.mount import router as mount_router
+from api.article import router as article_router
+from api.comment import router as comment_router
 from alembic.config import Config
 from alembic import command
 
@@ -20,7 +22,7 @@ from alembic import command
 app = FastAPI(
     title="相机数据管理系统API",
     description="相机数据管理后端服务，提供信息的增删改查功能",
-    # lifespan=lifespan
+    version="1.0"
 )
 
 # 添加CORS中间件
@@ -37,6 +39,8 @@ app.include_router(user_router)
 app.include_router(camera_router)
 app.include_router(lens_router)
 app.include_router(mount_router)
+app.include_router(article_router)
+app.include_router(comment_router)
 
 
 
