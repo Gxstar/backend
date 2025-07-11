@@ -1,8 +1,9 @@
 from typing import Optional
 from datetime import datetime
 from sqlmodel import SQLModel, Field
+from models.base import BaseSQLModel
 
-class LensMountLink(SQLModel, table=True):
+class LensMountLink(BaseSQLModel, table=True):
     """
     镜头和卡口的关联表模型
     用于建立多对多关系
@@ -20,4 +21,3 @@ class LensMountLink(SQLModel, table=True):
         index=True
     )
     is_primary: bool = Field(default=False, description="是否为主打卡口")
-    created_at: datetime = Field(default_factory=datetime.now, description="创建时间")

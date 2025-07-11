@@ -1,4 +1,5 @@
 from typing import Optional, List
+import sqlalchemy as sa
 from sqlmodel import Field, Relationship
 from models.base import BaseSQLModel
 from models.user import User
@@ -7,10 +8,10 @@ from models.lens import Lens
 
 class Rating(BaseSQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    target_type: str = Field(max_length=20, description="评分对象类型: camera-相机, lens-镜头")
+    target_type: str = Field(sa_column=sa.Column(sa.String(20)), description="评分对象类型: camera-相机, lens-镜头")
     target_id: int = Field(description="评分对象ID")
     score: float = Field(ge=1, le=5, description="评分值，范围1-5分")
-    comment: Optional[str] = Field(max_length=500, default=None, description="评分评论")
+    comment: Optional[str] = Field(sa_column=sa.Column(sa.String(500)), default=None, description="评分评论")
     
     # 关系定义
     user: Optional[User] = Relationship(back_populates="ratings")

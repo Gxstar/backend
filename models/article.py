@@ -6,17 +6,18 @@ from models.user import User
 from models.category import Category
 from models.article_tag_link import ArticleTagLink
 from models.tag import Tag
+import sqlalchemy as sa
 
 class Article(BaseSQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    title: str = Field(max_length=200, description="文章标题")
+    title: str = Field(sa_column=sa.Column(sa.String(200)), description="文章标题")
     title_zh: Optional[str] = Field(max_length=200, default=None, description="文章中文标题")
-    slug: str = Field(max_length=255, unique=True, description="URL友好的标识符")
-    content: str = Field(sa_type=Text(), description="文章内容")
+    slug: str = Field(sa_column=sa.Column(sa.String(255), unique=True), description="URL友好的标题")
+    content: str = Field(sa_column=sa.Column(sa.Text), description="文章内容")
     excerpt: Optional[str] = Field(max_length=500, default=None, description="文章摘要")
     author_id: int = Field(foreign_key="user.id", description="作者ID")
     category_id: int = Field(foreign_key="category.id", description="分类ID")
-    status: str = Field(max_length=20, default="draft", description="文章状态: draft-草稿, published-已发布, archived-已归档")
+    status: str = Field(sa_column=sa.Column(sa.String(20)), default="draft", description="文章状态")
     view_count: int = Field(default=0, ge=0, description="阅读量")
     like_count: int = Field(default=0, ge=0, description="点赞数")
     comment_count: int = Field(default=0, ge=0, description="评论数")
@@ -66,6 +67,4 @@ class ArticleRead(SQLModel):
     view_count: int
     like_count: int
     comment_count: int
-    created_at: datetime
-    updated_at: datetime
     published_at: Optional[datetime]

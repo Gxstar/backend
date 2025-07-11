@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from typing import List, Optional
 
-from models.camera import Camera
+from models.camera import Camera, CameraCreate, CameraUpdate, CameraRead
 from database.config import get_db
 from auth.auth import get_current_admin
 
@@ -10,15 +10,15 @@ router = APIRouter(prefix="/cameras", tags=["相机管理"])
 
 @router.post(
     "/", 
-    response_model=Camera,
+    response_model=CameraRead,
     summary="创建相机",
     description="添加一个新的相机到数据库",
     response_description="创建成功的相机信息",
     dependencies=[Depends(get_current_admin)]
 )
-async def create_camera(camera: Camera, db: Session = Depends(get_db)):
+async def create_camera(camera: CameraCreate, db: Session = Depends(get_db)):
     existing_camera = db.exec(
-        select(Camera).where(Camera.model == camera.model)
+        select(Camera).where(Camera.model_code == camera.model_code)
     ).first()
     if existing_camera:
         raise HTTPException(
@@ -26,14 +26,15 @@ async def create_camera(camera: Camera, db: Session = Depends(get_db)):
             detail="Camera with this model already exists"
         )
     
-    db.add(camera)
+    db_camera = Camera.from_orm(camera)
+    db.add(db_camera)
     db.commit()
-    db.refresh(camera)
-    return camera
+    db.refresh(db_camera)
+    return db_camera
 
 @router.get(
     "/",
-    response_model=List[Camera],
+    response_model=List[CameraRead],
     summary="获取相机列表",
     description="分页查询所有相机信息",
     response_description="相机列表"
@@ -46,13 +47,13 @@ async def read_cameras(
 ):
     query = select(Camera).offset(skip).limit(limit)
     if search:
-        query = query.where(Camera.model.contains(search))
+        query = query.where(Camera.model_code.contains(search))
     cameras = db.exec(query).all()
     return cameras
 
 @router.get(
     "/{camera_id}",
-    response_model=Camera,
+    response_model=CameraRead,
     summary="获取相机详情",
     description="根据ID查询特定相机信息",
     response_description="相机详细信息"
@@ -67,7 +68,7 @@ async def read_camera(camera_id: int, db: Session = Depends(get_db)):
 
 @router.put(
     "/{camera_id}",
-    response_model=Camera,
+    response_model=CameraRead,
     summary="更新相机信息",
     description="根据ID更新相机信息",
     response_description="更新后的相机信息",
@@ -75,16 +76,16 @@ async def read_camera(camera_id: int, db: Session = Depends(get_db)):
 )
 async def update_camera(
     camera_id: int,
-    camera_update: Camera,
+    camera_update: CameraUpdate,
     db: Session = Depends(get_db)
 ):
     db_camera = db.get(Camera, camera_id)
     if not db_camera:
         raise HTTPException(status_code=404, detail="Camera not found")
     
-    if camera_update.model != db_camera.model:
+    if camera_update.model_code and camera_update.model_code != db_camera.model_code:
         existing_camera = db.exec(
-            select(Camera).where(Camera.model == camera_update.model)
+            select(Camera).where(Camera.model_code == camera_update.model_code)
         ).first()
         if existing_camera:
             raise HTTPException(
