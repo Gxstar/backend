@@ -1,7 +1,6 @@
 from typing import Optional, List
 from datetime import datetime
-from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Text
+from sqlmodel import SQLModel, Field, Relationship, Text
 from models.base import BaseSQLModel
 from models.user import User
 from models.category import Category
@@ -13,7 +12,6 @@ class Article(BaseSQLModel, table=True):
     title: str = Field(max_length=200, description="文章标题")
     title_zh: Optional[str] = Field(max_length=200, default=None, description="文章中文标题")
     slug: str = Field(max_length=255, unique=True, description="URL友好的标识符")
-    # 将content字段类型改为TEXT以支持长文本
     content: str = Field(sa_type=Text(), description="文章内容")
     excerpt: Optional[str] = Field(max_length=500, default=None, description="文章摘要")
     author_id: int = Field(foreign_key="user.id", description="作者ID")
@@ -22,8 +20,6 @@ class Article(BaseSQLModel, table=True):
     view_count: int = Field(default=0, ge=0, description="阅读量")
     like_count: int = Field(default=0, ge=0, description="点赞数")
     comment_count: int = Field(default=0, ge=0, description="评论数")
-    created_at: datetime = Field(default_factory=datetime.now, description="创建时间")
-    updated_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"onupdate": datetime.now}, description="更新时间")
     published_at: Optional[datetime] = Field(default=None, description="发布时间")
     
     # 关系定义
