@@ -1,12 +1,21 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from typing import List
-from datetime import datetime
+from datetime import datetime as dt
 
 from database.config import get_db
 from models.article import Article, ArticleCreate, ArticleUpdate, ArticleRead
 from models.user import User
 from auth.auth import get_current_user
+
+# 辅助函数：检查文章所有权
+def check_article_ownership(article_id: int, user_id: int, session: Session):
+    article = session.get(Article, article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail="文章不存在")
+    if article.author_id != user_id:
+        raise HTTPException(status_code=403, detail="没有权限操作此文章")
+    return article
 
 # 创建文章路由实例
 router = APIRouter(tags=["文章"], prefix="/articles")
@@ -63,8 +72,7 @@ def create_article(
     # 设置文章作者为当前登录用户
     db_article.author_id = current_user.id
     # 设置创建时间
-    db_article.created_at = datetime.utcnow()
-    db_article.updated_at = datetime.utcnow()
+    # 时间戳由BaseSQLModel自动管理
     
     session.add(db_article)
     session.commit()
@@ -85,13 +93,7 @@ def update_article(
     current_user: User = Depends(get_current_user)
 ):
     """更新文章，仅文章作者可操作"""
-    db_article = session.get(Article, article_id)
-    if not db_article:
-        raise HTTPException(status_code=404, detail="文章不存在")
-    
-    # 检查权限：只有作者可以更新文章
-    if db_article.author_id != current_user.id:
-        raise HTTPException(status_code=403, detail="没有权限修改此文章")
+    db_article = check_article_ownership(article_id, current_user.id, session)
     
     # 更新文章内容
     article_data = article.dict(exclude_unset=True)
@@ -99,7 +101,7 @@ def update_article(
         setattr(db_article, key, value)
     
     # 更新修改时间
-    db_article.updated_at = datetime.utcnow()
+    # 时间戳由BaseSQLModel自动管理
     
     session.add(db_article)
     session.commit()
@@ -119,13 +121,7 @@ def delete_article(
     current_user: User = Depends(get_current_user)
 ):
     """删除文章，仅文章作者可操作"""
-    article = session.get(Article, article_id)
-    if not article:
-        raise HTTPException(status_code=404, detail="文章不存在")
-    
-    # 检查权限：只有作者可以删除文章
-    if article.author_id != current_user.id:
-        raise HTTPException(status_code=403, detail="没有权限删除此文章")
+    article = check_article_ownership(article_id, current_user.id, session)
     
     session.delete(article)
     session.commit()

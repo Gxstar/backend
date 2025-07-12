@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
-import datetime
+from datetime import datetime as dt
 import sqlalchemy as sa
 from .base import BaseSQLModel
 from .brand import Brand
@@ -9,7 +9,7 @@ from .brand import Brand
 class CameraBase(SQLModel):
     name: str = Field(sa_column=sa.Column(sa.String(200)), description="相机名称")
     name_zh: Optional[str] = Field(sa_column=sa.Column(sa.String(200)), default=None, description="相机中文名称")
-    brand_id: int = Field(description="品牌ID")
+    brand_id: int = Field(foreign_key="brand.id", description="品牌ID")
     model_code: Optional[str] = Field(sa_column=sa.Column(sa.String(50)), default=None, description="型号代码")
     release_year: int = Field(description="发布年份")
     sensor_type: str = Field(sa_column=sa.Column(sa.String(50)), description="传感器类型")
@@ -59,8 +59,8 @@ class CameraUpdate(SQLModel):
 # 数据读取模型 - 继承基础模型并添加ID和时间戳字段
 class CameraRead(CameraBase):
     id: int
-    created_at: datetime
-    updated_at: datetime
+    created_at: dt
+    updated_at: dt
     
     class Config:
         arbitrary_types_allowed = True

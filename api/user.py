@@ -4,7 +4,7 @@ from typing import List, Optional
 from datetime import timedelta
 import os
 
-from models.user import User
+from models.user import User, UserCreate, UserRead, UserUpdate
 from database.config import get_db
 from auth.auth import get_current_user, get_current_admin, get_password_hash, login_user
 
@@ -16,15 +16,15 @@ router = APIRouter(prefix="/users", tags=["用户管理"])
     description="用户登录接口，返回访问令牌",
     response_description="访问令牌"
 )
-async def login(user_data: dict, db: Session = Depends(get_db)):
-    username = user_data.get("username")
-    password = user_data.get("password")
+async def login(user: UserCreate, db: Session = Depends(get_db)):
+    username = user.username
+    password = user.password
     access_token = login_user(db, username, password)
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post(
     "/register",
-    response_model=User,
+    response_model=UserRead,
     summary="用户注册",
     description="新用户注册接口",
     response_description="注册成功的用户信息"
@@ -40,13 +40,13 @@ async def register_user(user_data: dict, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(
             status_code=400,
-            detail="Username or email already exists"
+            detail="用户名或邮箱已存在"
         )
     
     db_user = User(
-        username=user_data.get("username"),
-        email=user_data.get("email"),
-        password_hash=get_password_hash(user_data.get("password"))
+        username=user.username,
+        email=user.email,
+        password_hash=get_password_hash(user.password)
     )
     db.add(db_user)
     db.commit()
@@ -61,7 +61,7 @@ async def register_user(user_data: dict, db: Session = Depends(get_db)):
     response_description="创建成功的用户信息",
     dependencies=[Depends(get_current_admin)]
 )
-async def create_user(user: User, db: Session = Depends(get_db)):
+async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     # 检查用户名和邮箱是否已存在
     existing_user = db.exec(
         select(User).where(
@@ -75,12 +75,8 @@ async def create_user(user: User, db: Session = Depends(get_db)):
             detail="Username or email already exists"
         )
     
-    user.password_hash = get_password_hash(user.password_hash)
-    db_user = User(
-        username=user.username,
-        email=user.email,
-        password_hash=user.password_hash
-    )
+    user.password_hash = get_password_hash(user.password)
+    db_user = User.from_orm(user)
     db.add(db_user)
     db.commit()
     db.refresh(user)
@@ -132,9 +128,9 @@ async def read_user(
         select(User).where(User.id == user_id)
     ).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    if current_user.role != 'admin' and user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(status_code=404, detail="用户不存在")
+    if not current_user.is_staff and user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="没有权限")
     return user
 
 @router.put(
@@ -146,7 +142,7 @@ async def read_user(
 )
 async def update_user(
     user_id: int,
-    user_update: User,
+    user_update: UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -172,6 +168,10 @@ async def update_user(
             )
     
     user_data = user_update.model_dump(exclude_unset=True)
+    # 处理密码哈希
+    if 'password' in user_data:
+        user_data['password_hash'] = get_password_hash(user_data.pop('password'))
+    
     for key, value in user_data.items():
         setattr(db_user, key, value)
     

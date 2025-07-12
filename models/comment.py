@@ -1,21 +1,24 @@
 import sqlalchemy as sa
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime as dt
 from sqlmodel import SQLModel, Field, Relationship
 from models.base import BaseSQLModel
 from models.user import User
 from sqlmodel import Field, SQLModel
 from sqlalchemy import Text
 
-class Comment(BaseSQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    content: str = Field(sa_column=sa.Column(sa.Text))
-    author_id: Optional[int] = Field(default=None, foreign_key="user.id", description="评论作者ID")
-    article_id: Optional[int] = Field(default=None, foreign_key="article.id", description="文章ID")
+class CommentBase(SQLModel):
+    content: str = Field(sa_column=sa.Column(sa.Text), description="评论内容")
     target_type: str = Field(max_length=20, description="关联目标类型: article-文章, camera-相机, lens-镜头")
     target_id: int = Field(description="关联目标ID")
     parent_id: Optional[int] = Field(default=None, foreign_key="comment.id", description="父评论ID，用于实现评论回复")
+
+class Comment(CommentBase, BaseSQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    author_id: Optional[int] = Field(default=None, foreign_key="user.id", description="评论作者ID")
+    article_id: Optional[int] = Field(default=None, foreign_key="article.id", description="文章ID")
     is_approved: bool = Field(default=True, description="是否审核通过")
+    
     # 一对多关系：一个评论属于一篇文章
     article: Optional["Article"] = Relationship(back_populates="comments")
     # 一对多关系：一个评论属于一个作者
@@ -35,11 +38,9 @@ class Comment(BaseSQLModel, table=True):
     )
 
 # 数据创建模型
-class CommentCreate(SQLModel):
-    content: str = Field(description="评论内容")
-    target_type: str = Field(sa_column=sa.Column(sa.String(50)), description="目标类型")
-    target_id: int = Field(description="关联目标ID")
-    parent_id: Optional[int] = Field(default=None, description="父评论ID，用于实现评论回复")
+class CommentCreate(CommentBase):
+    """用于创建评论的模型"""
+    pass
 
 # 数据更新模型
 class CommentUpdate(SQLModel):
@@ -47,11 +48,8 @@ class CommentUpdate(SQLModel):
     is_approved: Optional[bool] = Field(default=None, description="是否审核通过")
 
 # 数据读取模型
-class CommentRead(SQLModel):
+class CommentRead(CommentBase):
+    """用于读取评论的模型，包含ID和审核状态"""
     id: int
-    content: str
     author_id: int
-    target_type: str
-    target_id: int
-    parent_id: Optional[int]
     is_approved: bool

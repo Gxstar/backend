@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException,Body
 from sqlmodel import Session, select
 from typing import List, Optional
 
-from models.mount import Mount
+from models.mount import Mount, MountCreate, MountUpdate, MountRead
 from database.config import get_db
 from auth.auth import get_current_admin
 
@@ -10,13 +10,13 @@ router = APIRouter(prefix="/mounts", tags=["卡口管理"])
 
 @router.post(
     "/", 
-    response_model=Mount,
+    response_model=MountRead,
     summary="创建卡口",
     description="添加一个新的卡口到数据库",
     response_description="创建成功的卡口信息",
     dependencies=[Depends(get_current_admin)]
 )
-async def create_mount(mount: Mount, brand_ids: List[int] = None, db: Session = Depends(get_db)):
+async def create_mount(mount: MountCreate, brand_ids: List[int] = None, db: Session = Depends(get_db)):
     """
     创建卡口并关联品牌
     :param mount: 卡口基本信息
@@ -33,9 +33,10 @@ async def create_mount(mount: Mount, brand_ids: List[int] = None, db: Session = 
             detail="Mount with this name already exists"
         )
     
-    db.add(mount)
+    db_mount = Mount.from_orm(mount)
+    db.add(db_mount)
     db.commit()
-    db.refresh(mount)
+    db.refresh(db_mount)
     
     # 处理品牌关联
     if brand_ids:
@@ -57,7 +58,7 @@ async def create_mount(mount: Mount, brand_ids: List[int] = None, db: Session = 
 
 @router.get(
     "/",
-    response_model=List[Mount],
+    response_model=List[MountRead],
     summary="获取卡口列表",
     description="分页查询所有卡口信息",
     response_description="卡口列表"
@@ -85,7 +86,7 @@ async def read_mounts(
 
 @router.get(
     "/{mount_id}",
-    response_model=Mount,
+    response_model=MountRead,
     summary="获取卡口详情",
     description="根据ID查询特定卡口信息",
     response_description="卡口详细信息"
@@ -107,7 +108,7 @@ async def read_mount(mount_id: int, db: Session = Depends(get_db)):
 
 @router.put(
     "/{mount_id}",
-    response_model=Mount,
+    response_model=MountRead,
     summary="更新卡口信息",
     description="根据ID更新卡口信息",
     response_description="更新后的卡口信息",
@@ -115,7 +116,7 @@ async def read_mount(mount_id: int, db: Session = Depends(get_db)):
 )
 async def update_mount(
     mount_id: int,
-    mount_update: Mount,
+    mount_update: MountUpdate,
     brands: List[int] = None,
     db: Session = Depends(get_db)
 ):

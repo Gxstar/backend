@@ -1,5 +1,4 @@
 from typing import Optional
-from datetime import datetime
 from sqlmodel import SQLModel, Field
 from models.base import BaseSQLModel
 

@@ -8,6 +8,9 @@ from api.lens import router as lens_router
 from api.mount import router as mount_router
 from api.article import router as article_router
 from api.comment import router as comment_router
+from api.tag import router as tag_router
+from api.rating import router as rating_router
+from api.category import router as category_router
 from alembic.config import Config
 from alembic import command
 
@@ -41,6 +44,9 @@ app.include_router(lens_router)
 app.include_router(mount_router)
 app.include_router(article_router)
 app.include_router(comment_router)
+app.include_router(tag_router)
+app.include_router(rating_router)
+app.include_router(category_router)
 
 
 
